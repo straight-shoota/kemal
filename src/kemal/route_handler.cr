@@ -5,7 +5,6 @@ module Kemal
   # are done in this handler.
   class RouteHandler
     include HTTP::Handler
-    INSTANCE = new
 
     property tree
 
@@ -36,7 +35,7 @@ module Kemal
       content = route.handler.call(context)
     ensure
       remove_tmpfiles(context)
-      if Kemal.config.error_handlers.has_key?(context.response.status_code)
+      if context.application.error_handlers.has_key?(context.response.status_code)
         raise Kemal::Exceptions::CustomException.new(context)
       end
       context.response.print(content)

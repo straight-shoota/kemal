@@ -14,7 +14,7 @@ describe "Run" do
   it "runs without a block being specified" do
     Kemal.config.env = "test"
     Kemal.run
-    Kemal.config.running.should eq true
+    Kemal.application.running.should eq true
     Kemal.stop
   end
 end

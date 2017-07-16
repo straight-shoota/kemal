@@ -2,7 +2,25 @@ require "http"
 require "json"
 require "uri"
 require "tempfile"
-require "./kemal/*"
+require "./kemal/base"
+require "./kemal/base_log_handler"
+require "./kemal/cli"
+require "./kemal/common_exception_handler"
+require "./kemal/common_log_handler"
+require "./kemal/config"
+require "./kemal/exceptions"
+require "./kemal/file_upload"
+require "./kemal/filter_handler"
+require "./kemal/handler"
+require "./kemal/init_handler"
+require "./kemal/null_log_handler"
+require "./kemal/param_parser"
+require "./kemal/response"
+require "./kemal/route"
+require "./kemal/route_handler"
+require "./kemal/ssl"
+require "./kemal/static_file_handler"
+require "./kemal/websocket_handler"
 require "./kemal/ext/*"
 require "./kemal/helpers/*"
 
@@ -24,17 +42,18 @@ module Kemal
   # If not given Kemal will use `Kemal::Config#port`
   def self.run(port = nil, &block)
     Kemal::CLI.new
-    config = Kemal.config
-    config.setup
+    config = Kemal::Config.new
+    application = Kemal::Base.new(config)
     config.port = port if port
+    application.setup
 
-    config.server = HTTP::Server.new(config.host_binding, config.port, config.handlers)
+    application.server = HTTP::Server.new(config.host_binding, config.port, application.handlers)
     {% if !flag?(:without_openssl) %}
-    config.server.tls = config.ssl
+    application.server.tls = config.ssl
     {% end %}
 
-    unless Kemal.config.error_handlers.has_key?(404)
-      error 404 do |env|
+    unless application.error_handlers.has_key?(404)
+      application.error 404 do |env|
         render_404
       end
     end
@@ -48,7 +67,7 @@ module Kemal
       end
 
       # This route serves the built-in images for not_found and exceptions.
-      get "/__kemal__/:image" do |env|
+      application.get "/__kemal__/:image" do |env|
         image = env.params.url["image"]
         file_path = File.expand_path("lib/kemal/images/#{image}", Dir.current)
         if File.exists? file_path
@@ -59,18 +78,18 @@ module Kemal
       end
     end
 
-    config.running = true
+    application.running = true
     yield config
-    config.server.listen if config.env != "test"
+    application.server.listen if config.env != "test"
   end
 
   def self.stop
-    if config.running
-      if config.server
-        config.server.close
-        config.running = false
+    if application.running
+      if application.server
+        application.server.close
+        application.running = false
       else
-        raise "Kemal.config.server is not set. Please use Kemal.run to set the server."
+        raise "Kemal.application.server is not set. Please use Kemal.run to set the server."
       end
     else
       raise "Kemal is already stopped."

@@ -59,8 +59,8 @@ describe "Context" do
     io = IO::Memory.new
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
-    Kemal::FilterHandler::INSTANCE.call(context)
-    Kemal::RouteHandler::INSTANCE.call(context)
+    Kemal.application.filter_handler.call(context)
+    Kemal.application.route_handler.call(context)
     context.store["key"].should eq "value"
     context.store["before_get"].should eq "Kemal"
     context.store["before_get_int"].should eq 123

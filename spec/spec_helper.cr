@@ -1,5 +1,6 @@
 require "spec"
 require "../src/*"
+require "../src/kemal/dsl"
 
 include Kemal
 
@@ -33,6 +34,7 @@ def create_request_and_return_io(handler, request)
   io = IO::Memory.new
   response = HTTP::Server::Response.new(io)
   context = HTTP::Server::Context.new(request, response)
+  context.application = Kemal.application
   handler.call(context)
   response.close
   io.rewind
@@ -43,6 +45,7 @@ def create_ws_request_and_return_io(handler, request)
   io = IO::Memory.new
   response = HTTP::Server::Response.new(io)
   context = HTTP::Server::Context.new(request, response)
+  context.application = Kemal.application
   begin
     handler.call context
   rescue IO::Error
@@ -64,10 +67,10 @@ def call_request_on_app(request)
 end
 
 def build_main_handler
-  Kemal.config.setup
-  main_handler = Kemal.config.handlers.first
+  Kemal.application.setup
+  main_handler = Kemal.application.handlers.first
   current_handler = main_handler
-  Kemal.config.handlers.each_with_index do |handler, index|
+  Kemal.application.handlers.each_with_index do |handler, index|
     current_handler.next = handler
     current_handler = handler
   end
@@ -80,6 +83,6 @@ Spec.before_each do
 end
 
 Spec.after_each do
-  Kemal.config.clear
-  Kemal::RouteHandler::INSTANCE.tree = Radix::Tree(Route).new
+  Kemal.application.clear
+  Kemal.application.route_handler.tree = Radix::Tree(Route).new
 end

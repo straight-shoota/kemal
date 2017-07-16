@@ -121,14 +121,14 @@ describe "Handler" do
   it "adds a handler at given position" do
     post_handler = PostOnlyHandler.new
     add_handler post_handler, 1
-    Kemal.config.setup
-    Kemal.config.handlers[1].should eq post_handler
+    Kemal.application.setup
+    Kemal.application.handlers[1].should eq post_handler
   end
 
   it "assigns custom handlers" do
     post_only_handler = PostOnlyHandler.new
     post_exclude_handler = PostExcludeHandler.new
-    Kemal.config.handlers = [post_only_handler, post_exclude_handler]
-    Kemal.config.handlers.should eq [post_only_handler, post_exclude_handler]
+    Kemal.application.handlers = [post_only_handler, post_exclude_handler]
+    Kemal.application.handlers.should eq [post_only_handler, post_exclude_handler]
   end
 end
