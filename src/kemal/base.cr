@@ -61,7 +61,7 @@ class Kemal::Base
     @router_included = false
     @handler_position = 0
     @default_handlers_setup = false
-    handlers
+
     handlers.clear
     custom_handlers.clear
     websocket_handlers.clear
@@ -71,27 +71,27 @@ class Kemal::Base
 
   def handlers=(handlers : Array(HTTP::Handler))
     clear
-    handlers.replace(handlers)
+    @handlers.replace(handlers)
   end
 
   def add_handler(handler : HTTP::Handler)
-    custom_handlers << {nil, handler}
+    @custom_handlers << {nil, handler}
   end
 
   def add_handler(handler : HTTP::Handler, position : Int32)
-    custom_handlers << {position, handler}
+    @custom_handlers << {position, handler}
   end
 
   def add_handler(handler : HTTP::WebSocketHandler)
-    websocket_handlers << handler
+    @websocket_handlers << handler
   end
 
   def add_filter_handler(handler : HTTP::Handler)
-    filter_handlers << handler
+    @filter_handlers << handler
   end
 
   def add_error_handler(status_code, &handler : HTTP::Server::Context, Exception -> _)
-    error_handlers[status_code] = ->(context : HTTP::Server::Context, error : Exception) { handler.call(context, error).to_s }
+    @error_handlers[status_code] = ->(context : HTTP::Server::Context, error : Exception) { handler.call(context, error).to_s }
   end
 
   def setup
@@ -110,7 +110,7 @@ class Kemal::Base
   end
 
   private def setup_init_handler
-    handlers.insert(@handler_position, Kemal::InitHandler.new(self))
+    @handlers.insert(@handler_position, Kemal::InitHandler.new(self))
     @handler_position += 1
   end
 
@@ -120,48 +120,117 @@ class Kemal::Base
                 else
                   Kemal::NullLogHandler.new
                 end
-    handlers.insert(@handler_position, @logger.not_nil!)
+    @handlers.insert(@handler_position, @logger.not_nil!)
     @handler_position += 1
   end
 
   private def setup_error_handler
     if @config.always_rescue
       @error_handler ||= Kemal::CommonExceptionHandler.new
-      handlers.insert(@handler_position, @error_handler.not_nil!)
+      @handlers.insert(@handler_position, @error_handler.not_nil!)
       @handler_position += 1
     end
   end
 
   private def setup_static_file_handler
     if @config.serve_static.is_a?(Hash)
-      handlers.insert(@handler_position, Kemal::StaticFileHandler.new(@config.public_folder))
+      @handlers.insert(@handler_position, Kemal::StaticFileHandler.new(@config.public_folder))
       @handler_position += 1
     end
   end
 
   # Handle WebSocketHandler
   private def setup_custom_handlers
-    custom_handlers.each do |ch|
+    @custom_handlers.each do |ch|
       position = ch[0]
       if !position
-        handlers.insert(@handler_position, ch[1])
+        @handlers.insert(@handler_position, ch[1])
         @handler_position += 1
       else
-        handlers.insert(position, ch[1])
+        @handlers.insert(position, ch[1])
         @handler_position += 1
       end
     end
   end
 
   private def setup_websocket_handlers
-    websocket_handlers.each do |h|
-      handlers.insert(@handler_position, h)
+    @websocket_handlers.each do |h|
+      @handlers.insert(@handler_position, h)
     end
   end
 
   private def setup_filter_handlers
-    filter_handlers.each do |h|
-      handlers.insert(@handler_position, h)
+    @filter_handlers.each do |h|
+      @handlers.insert(@handler_position, h)
+    end
+  end
+
+  # Overload of self.run with the default startup logging
+  def run(port = nil)
+    run port do
+      log "[#{config.env}] Kemal is ready to lead at #{config.scheme}://#{config.host_binding}:#{config.port}"
+    end
+  end
+
+  # Overload of self.run to allow just a block
+  def run(&block)
+    run nil, &block
+  end
+
+  # The command to run a `Kemal` application.
+  # The port can be given to `#run` but is optional.
+  # If not given Kemal will use `Kemal::Config#port`
+  def run(port = nil, &block)
+    setup
+
+    @server = server = HTTP::Server.new(@config.host_binding, @config.port, @handlers)
+    {% if !flag?(:without_openssl) %}
+    server.tls = config.ssl
+    {% end %}
+
+    unless error_handlers.has_key?(404)
+      error 404 do |env|
+        render_404
+      end
+    end
+
+    # Test environment doesn't need to have signal trap, built-in images, and logging.
+    unless config.env == "test"
+      Signal::INT.trap do
+        log "Kemal is going to take a rest!" if config.shutdown_message
+        Kemal.stop
+        exit
+      end
+
+      # This route serves the built-in images for not_found and exceptions.
+      get "/__kemal__/:image" do |env|
+        image = env.params.url["image"]
+        file_path = File.expand_path("lib/kemal/images/#{image}", Dir.current)
+        if File.exists? file_path
+          send_file env, file_path
+        else
+          halt env, 404
+        end
+      end
+    end
+
+    @running = true
+
+    yield self
+
+    server.listen if @config.env != "test"
+  end
+
+  def stop
+    if @running
+      if server = @server
+        server.close
+        @running = false
+      else
+        raise "server is not set. Please use run to set the server."
+      end
+    else
+      raise "Kemal is already stopped."
     end
   end
 end

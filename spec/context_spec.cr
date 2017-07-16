@@ -59,6 +59,7 @@ describe "Context" do
     io = IO::Memory.new
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
+    context.application = Kemal.application
     Kemal.application.filter_handler.call(context)
     Kemal.application.route_handler.call(context)
     context.store["key"].should eq "value"

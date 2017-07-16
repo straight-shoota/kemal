@@ -57,6 +57,8 @@ describe "Handler" do
     filter_middleware._add_route_filter("GET", "/", :before) do |env|
       env.response << " so"
     end
+    Kemal.application.add_filter_handler filter_middleware
+
     add_handler CustomTestHandler.new
 
     get "/" do |env|

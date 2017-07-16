@@ -34,10 +34,6 @@ module Kemal
       ssl ? "https" : "http"
     end
 
-    def serve_static=(bool : Bool)
-      serve_static = bool ? DEFAULT_SERVE_STATIC : nil
-    end
-
     def extra_options(&@extra_options : OptionParser ->)
     end
   end

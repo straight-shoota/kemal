@@ -40,59 +40,15 @@ module Kemal
   # The command to run a `Kemal` application.
   # The port can be given to `#run` but is optional.
   # If not given Kemal will use `Kemal::Config#port`
-  def self.run(port = nil, &block)
-    Kemal::CLI.new
-    config = Kemal::Config.new
-    application = Kemal::Base.new(config)
-    config.port = port if port
-    application.setup
+  def self.run(port = nil)
+    Kemal::CLI.new(Kemal.config)
 
-    application.server = HTTP::Server.new(config.host_binding, config.port, application.handlers)
-    {% if !flag?(:without_openssl) %}
-    application.server.tls = config.ssl
-    {% end %}
-
-    unless application.error_handlers.has_key?(404)
-      application.error 404 do |env|
-        render_404
-      end
+    Kemal.application.run(port) do |application|
+      yield application
     end
-
-    # Test environment doesn't need to have signal trap, built-in images, and logging.
-    unless config.env == "test"
-      Signal::INT.trap do
-        log "Kemal is going to take a rest!" if config.shutdown_message
-        Kemal.stop
-        exit
-      end
-
-      # This route serves the built-in images for not_found and exceptions.
-      application.get "/__kemal__/:image" do |env|
-        image = env.params.url["image"]
-        file_path = File.expand_path("lib/kemal/images/#{image}", Dir.current)
-        if File.exists? file_path
-          send_file env, file_path
-        else
-          halt env, 404
-        end
-      end
-    end
-
-    application.running = true
-    yield config
-    application.server.listen if config.env != "test"
   end
 
   def self.stop
-    if application.running
-      if application.server
-        application.server.close
-        application.running = false
-      else
-        raise "Kemal.application.server is not set. Please use Kemal.run to set the server."
-      end
-    else
-      raise "Kemal is already stopped."
-    end
+    Kemal.application.stop
   end
 end

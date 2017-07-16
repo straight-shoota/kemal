@@ -30,6 +30,7 @@ describe "Kemal::CommonExceptionHandler" do
     io = IO::Memory.new
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
+    context.application = Kemal.application
     INSTANCE.next = Kemal::RouteHandler.new
     INSTANCE.call(context)
     response.close
@@ -51,6 +52,7 @@ describe "Kemal::CommonExceptionHandler" do
     io = IO::Memory.new
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
+    context.application = Kemal.application
     INSTANCE.next = Kemal::RouteHandler.new
     INSTANCE.call(context)
     response.close
@@ -73,6 +75,7 @@ describe "Kemal::CommonExceptionHandler" do
     io = IO::Memory.new
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
+    context.application = Kemal.application
     INSTANCE.next = Kemal::RouteHandler.new
     INSTANCE.call(context)
     response.close
@@ -95,6 +98,7 @@ describe "Kemal::CommonExceptionHandler" do
     io = IO::Memory.new
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
+    context.application = Kemal.application
     INSTANCE.next = Kemal::RouteHandler.new
     INSTANCE.call(context)
     response.close
