@@ -4,16 +4,7 @@
 # - WebSocket(ws)
 # - before_*
 # - error
-
-module Kemal
-  def self.application
-    @@application ||= Kemal::Base.new
-  end
-
-  def self.config
-    application.config
-  end
-end
+require "./dsl/*"
 
 {% for method in Kemal::Base::HTTP_METHODS %}
   def {{method.id}}(path, &block : HTTP::Server::Context -> _)

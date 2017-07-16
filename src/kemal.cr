@@ -25,6 +25,14 @@ require "./kemal/ext/*"
 require "./kemal/helpers/*"
 
 module Kemal
+  def self.application
+    @@application ||= Kemal::Base.new
+  end
+
+  def self.config
+    application.config
+  end
+
   # Overload of self.run with the default startup logging
   def self.run(port = nil)
     self.run port do
