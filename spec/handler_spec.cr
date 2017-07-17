@@ -1,4 +1,4 @@
-require "./spec_helper"
+require "./dsl_helper"
 
 class CustomTestHandler < Kemal::Handler
   def call(env)

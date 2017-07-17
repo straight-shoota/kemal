@@ -1,4 +1,4 @@
-require "./spec_helper"
+require "./dsl_helper"
 
 describe "Context" do
   it "sets content type" do

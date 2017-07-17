@@ -97,4 +97,8 @@ class Kemal::Base
       raise "Kemal is already stopped."
     end
   end
+
+  def log(message)
+    logger.write "#{message}\n"
+  end
 end

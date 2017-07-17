@@ -1,4 +1,4 @@
-require "./spec_helper"
+require "./dsl_helper"
 
 describe "Macros" do
   describe "#public_folder" do

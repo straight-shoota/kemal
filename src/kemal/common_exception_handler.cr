@@ -3,6 +3,13 @@ module Kemal
   class CommonExceptionHandler
     include HTTP::Handler
 
+    getter app : Kemal::Base
+
+    def initialize(@app)
+    end
+
+    delegate log, to: app
+
     def call(context)
       begin
         call_next(context)
@@ -14,7 +21,7 @@ module Kemal
         log("Exception: #{ex.inspect_with_backtrace}")
         return call_exception_with_status_code(context, ex, 500) if context.application.error_handlers.has_key?(500)
         verbosity = context.application.config.env == "production" ? false : true
-        return render_500(context, ex.inspect_with_backtrace, verbosity)
+        return app.render_500(context, ex.inspect_with_backtrace, verbosity)
       end
     end
 

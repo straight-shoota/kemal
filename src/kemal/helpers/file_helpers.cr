@@ -1,8 +1,4 @@
 module Kemal::FileHelpers
-  def log(message)
-    logger.write "#{message}\n"
-  end
-
   # Send a file with given path and base the mime-type on the file extension
   # or default `application/octet-stream` mime_type.
   #
@@ -11,7 +7,7 @@ module Kemal::FileHelpers
   # Optionally you can override the mime_type
   #
   #   send_file env, "./path/to/file", "image/jpeg"
-  def send_file(env, path : String, mime_type : String? = nil)
+  def self.send_file(env, path : String, mime_type : String? = nil, gzip = true)
     file_path = File.expand_path(path, Dir.current)
     mime_type ||= Kemal::Utils.mime_type(file_path)
     env.response.content_type = mime_type
@@ -23,12 +19,12 @@ module Kemal::FileHelpers
       if env.request.method == "GET" && env.request.headers.has_key?("Range")
         next multipart(file, env)
       end
-      if request_headers.includes_word?("Accept-Encoding", "gzip") && serve_static?("gzip") && filesize > minsize && Kemal::Utils.zip_types(file_path)
+      if request_headers.includes_word?("Accept-Encoding", "gzip") && gzip && filesize > minsize && Kemal::Utils.zip_types(file_path)
         env.response.headers["Content-Encoding"] = "gzip"
         Gzip::Writer.open(env.response) do |deflate|
           IO.copy(file, deflate)
         end
-      elsif request_headers.includes_word?("Accept-Encoding", "deflate") && serve_static?("gzip") && filesize > minsize && Kemal::Utils.zip_types(file_path)
+      elsif request_headers.includes_word?("Accept-Encoding", "deflate") && gzip && filesize > minsize && Kemal::Utils.zip_types(file_path)
         env.response.headers["Content-Encoding"] = "deflate"
         Flate::Writer.new(env.response) do |deflate|
           IO.copy(file, deflate)
@@ -41,11 +37,11 @@ module Kemal::FileHelpers
     return
   end
 
-  def serve_static?(key)
-    (h = config.serve_static).is_a?(Hash) && h[key]? == true
+  def send_file(env, path : String, mime_type : String? = nil)
+    Kemal::FileHelpers.send_file(env, path, mime_type, config.serve_static?("gzip"))
   end
 
-  private def multipart(file, env)
+  private def self.multipart(file, env)
     # See http://httpwg.org/specs/rfc7233.html
     fileb = file.size
 

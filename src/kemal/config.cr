@@ -23,7 +23,6 @@ module Kemal
     property serve_static : Hash(String, Bool) | Bool = DEFAULT_SERVE_STATIC
     property public_folder = "./public"
     property logging = true
-    property error_handler = Kemal::CommonExceptionHandler.new
     property always_rescue = true
     property shutdown_message = true
 
@@ -32,6 +31,10 @@ module Kemal
     end
 
     def extra_options(&@extra_options : OptionParser ->)
+    end
+
+    def serve_static?(key)
+      (h = @serve_static).is_a?(Hash) && h[key]? == true
     end
 
     # Create a config with default values

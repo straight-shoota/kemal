@@ -1,6 +1,6 @@
-require "./spec_helper"
+require "./dsl_helper"
 
-private INSTANCE = Kemal::CommonExceptionHandler.new
+private INSTANCE = Kemal::CommonExceptionHandler.new(Kemal::Base.new)
 
 describe "Kemal::CommonExceptionHandler" do
   it "renders 404 on route not found" do

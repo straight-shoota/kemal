@@ -1,14 +1,20 @@
 require "./spec_helper"
 
-private def handle(request, fallthrough = true)
+private def handle(request, config = default_config, fallthrough = true)
   io = IO::Memory.new
   response = HTTP::Server::Response.new(io)
   context = HTTP::Server::Context.new(request, response)
-  handler = Kemal::StaticFileHandler.new "#{__DIR__}/static", fallthrough
+  handler = Kemal::StaticFileHandler.new config, fallthrough
   handler.call context
   response.close
   io.rewind
   HTTP::Client::Response.from_io(io)
+end
+
+private def default_config
+  Kemal::Config.new.tap do |config|
+    config.public_folder = "#{__DIR__}/static"
+  end
 end
 
 describe Kemal::StaticFileHandler do
@@ -36,38 +42,43 @@ describe Kemal::StaticFileHandler do
   end
 
   it "should not list directory's entries" do
-    serve_static({"gzip" => true, "dir_listing" => false})
-    response = handle HTTP::Request.new("GET", "/dir/")
+    config = default_config
+    config.serve_static = {"gzip" => true, "dir_listing" => false}
+    response = handle HTTP::Request.new("GET", "/dir/"), config
     response.status_code.should eq(404)
   end
 
   it "should list directory's entries when config is set" do
-    serve_static({"gzip" => true, "dir_listing" => true})
-    response = handle HTTP::Request.new("GET", "/dir/")
+    config = default_config
+    config.serve_static = {"gzip" => true, "dir_listing" => true}
+    response = handle HTTP::Request.new("GET", "/dir/"), config
     response.status_code.should eq(200)
     response.body.should match(/test.txt/)
   end
 
   it "should gzip a file if config is true, headers accept gzip and file is > 880 bytes" do
-    serve_static({"gzip" => true, "dir_listing" => true})
+    config = default_config
+    config.serve_static = {"gzip" => true, "dir_listing" => true}
     headers = HTTP::Headers{"Accept-Encoding" => "gzip, deflate, sdch, br"}
-    response = handle HTTP::Request.new("GET", "/dir/bigger.txt", headers)
+    response = handle HTTP::Request.new("GET", "/dir/bigger.txt", headers), config
     response.status_code.should eq(200)
     response.headers["Content-Encoding"].should eq "gzip"
   end
 
   it "should not gzip a file if config is true, headers accept gzip and file is < 880 bytes" do
-    serve_static({"gzip" => true, "dir_listing" => true})
+    config = default_config
+    config.serve_static = {"gzip" => true, "dir_listing" => true}
     headers = HTTP::Headers{"Accept-Encoding" => "gzip, deflate, sdch, br"}
-    response = handle HTTP::Request.new("GET", "/dir/test.txt", headers)
+    response = handle HTTP::Request.new("GET", "/dir/test.txt", headers), config
     response.status_code.should eq(200)
     response.headers["Content-Encoding"]?.should eq nil
   end
 
   it "should not gzip a file if config is false, headers accept gzip and file is > 880 bytes" do
-    serve_static({"gzip" => false, "dir_listing" => true})
+    config = default_config
+    config.serve_static = {"gzip" => false, "dir_listing" => true}
     headers = HTTP::Headers{"Accept-Encoding" => "gzip, deflate, sdch, br"}
-    response = handle HTTP::Request.new("GET", "/dir/bigger.txt", headers)
+    response = handle HTTP::Request.new("GET", "/dir/bigger.txt", headers), config
     response.status_code.should eq(200)
     response.headers["Content-Encoding"]?.should eq nil
   end
@@ -96,7 +107,7 @@ describe Kemal::StaticFileHandler do
     %w(POST PUT DELETE).each do |method|
       response = handle HTTP::Request.new(method, "/dir/test.txt")
       response.status_code.should eq(404)
-      response = handle HTTP::Request.new(method, "/dir/test.txt"), false
+      response = handle HTTP::Request.new(method, "/dir/test.txt"), fallthrough: false
       response.status_code.should eq(405)
       response.headers["Allow"].should eq("GET, HEAD")
     end

@@ -73,7 +73,7 @@ class Kemal::Base
 
     private def setup_error_handler
       if @config.always_rescue
-        @error_handler ||= Kemal::CommonExceptionHandler.new
+        @error_handler ||= Kemal::CommonExceptionHandler.new(self)
         @handlers.insert(@handler_position, @error_handler.not_nil!)
         @handler_position += 1
       end
@@ -81,7 +81,7 @@ class Kemal::Base
 
     private def setup_static_file_handler
       if @config.serve_static.is_a?(Hash)
-        @handlers.insert(@handler_position, Kemal::StaticFileHandler.new(@config.public_folder))
+        @handlers.insert(@handler_position, Kemal::StaticFileHandler.new(@config))
         @handler_position += 1
       end
     end

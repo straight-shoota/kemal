@@ -1,4 +1,4 @@
-require "./spec_helper"
+require "./dsl_helper"
 
 macro render_with_base_and_layout(filename)
   render "spec/asset/#{{{filename}}}", "spec/asset/layout.ecr"
