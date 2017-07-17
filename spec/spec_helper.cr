@@ -5,7 +5,7 @@ def call_request_on_app(app, request)
   io = IO::Memory.new
   response = HTTP::Server::Response.new(io)
   context = HTTP::Server::Context.new(request, response)
-  main_handler = build_main_handler
+  main_handler = build_main_handler(app)
   main_handler.call context
   response.close
   io.rewind

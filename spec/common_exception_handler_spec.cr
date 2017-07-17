@@ -1,18 +1,13 @@
 require "./dsl_helper"
 
-private INSTANCE = Kemal::CommonExceptionHandler.new(Kemal::Base.new)
-
 describe "Kemal::CommonExceptionHandler" do
   it "renders 404 on route not found" do
-    get "/" do |env|
-      "Hello"
-    end
-
     request = HTTP::Request.new("GET", "/asd")
     io = IO::Memory.new
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
-    INSTANCE.call(context)
+    subject = Kemal::CommonExceptionHandler.new(Kemal::Base.new)
+    subject.call(context)
     response.close
     io.rewind
     response = HTTP::Client::Response.from_io(io, decompress: false)
@@ -20,19 +15,21 @@ describe "Kemal::CommonExceptionHandler" do
   end
 
   it "renders custom error" do
-    error 403 do
-      "403 error"
-    end
-    get "/" do |env|
-      env.response.status_code = 403
-    end
     request = HTTP::Request.new("GET", "/")
     io = IO::Memory.new
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
-    context.application = Kemal.application
-    INSTANCE.next = Kemal::RouteHandler.new
-    INSTANCE.call(context)
+    app = Kemal::Base.new
+    app.error 403 do
+      "403 error"
+    end
+    app.get "/" do |env|
+      env.response.status_code = 403
+    end
+    context.application = app
+    subject = Kemal::CommonExceptionHandler.new(app)
+    subject.next = Kemal::RouteHandler.new
+    subject.call(context)
     response.close
     io.rewind
     response = HTTP::Client::Response.from_io(io, decompress: false)
@@ -42,19 +39,21 @@ describe "Kemal::CommonExceptionHandler" do
   end
 
   it "renders custom 500 error" do
-    error 500 do |env|
-      "Something happened"
-    end
-    get "/" do |env|
-      env.response.status_code = 500
-    end
     request = HTTP::Request.new("GET", "/")
     io = IO::Memory.new
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
-    context.application = Kemal.application
-    INSTANCE.next = Kemal::RouteHandler.new
-    INSTANCE.call(context)
+    app = Kemal::Base.new
+    app.error 500 do |env|
+      "Something happened"
+    end
+    app.get "/" do |env|
+      env.response.status_code = 500
+    end
+    context.application = app
+    subject = Kemal::CommonExceptionHandler.new(app)
+    subject.next = Kemal::RouteHandler.new
+    subject.call(context)
     response.close
     io.rewind
     response = HTTP::Client::Response.from_io(io, decompress: false)
@@ -64,20 +63,22 @@ describe "Kemal::CommonExceptionHandler" do
   end
 
   it "keeps the specified error Content-Type" do
-    error 500 do |env|
-      "Something happened"
-    end
-    get "/" do |env|
-      env.response.content_type = "application/json"
-      env.response.status_code = 500
-    end
     request = HTTP::Request.new("GET", "/")
     io = IO::Memory.new
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
-    context.application = Kemal.application
-    INSTANCE.next = Kemal::RouteHandler.new
-    INSTANCE.call(context)
+    app = Kemal::Base.new
+    app.error 500 do |env|
+      "Something happened"
+    end
+    app.get "/" do |env|
+      env.response.content_type = "application/json"
+      env.response.status_code = 500
+    end
+    context.application = app
+    subject = Kemal::CommonExceptionHandler.new(app)
+    subject.next = Kemal::RouteHandler.new
+    subject.call(context)
     response.close
     io.rewind
     response = HTTP::Client::Response.from_io(io, decompress: false)
@@ -87,20 +88,22 @@ describe "Kemal::CommonExceptionHandler" do
   end
 
   it "renders custom error with env and error" do
-    error 500 do |env, err|
-      err.message
-    end
-    get "/" do |env|
-      env.response.content_type = "application/json"
-      env.response.status_code = 500
-    end
     request = HTTP::Request.new("GET", "/")
     io = IO::Memory.new
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
-    context.application = Kemal.application
-    INSTANCE.next = Kemal::RouteHandler.new
-    INSTANCE.call(context)
+    app = Kemal::Base.new
+    app.error 500 do |env, err|
+      err.message
+    end
+    app.get "/" do |env|
+      env.response.content_type = "application/json"
+      env.response.status_code = 500
+    end
+    context.application = app
+    subject = Kemal::CommonExceptionHandler.new(Kemal::Base.new)
+    subject.next = Kemal::RouteHandler.new
+    subject.call(context)
     response.close
     io.rewind
     response = HTTP::Client::Response.from_io(io, decompress: false)
