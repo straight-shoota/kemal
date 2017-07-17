@@ -50,7 +50,7 @@ module Kemal
   # The port can be given to `#run` but is optional.
   # If not given Kemal will use `Kemal::Config#port`
   def self.run(port = nil, &block)
-    Kemal::CLI.new(Kemal.config)
+    Kemal::CLI.new(config)
 
     application.run(port, &block)
   end
