@@ -3,6 +3,7 @@ require "json"
 require "uri"
 require "tempfile"
 require "./kemal/base"
+require "./kemal/application"
 require "./kemal/base_log_handler"
 require "./kemal/cli"
 require "./kemal/common_exception_handler"
@@ -26,7 +27,7 @@ require "./kemal/helpers/*"
 
 module Kemal
   def self.application
-    @@application ||= Kemal::Base.new
+    @@application ||= Kemal::Application.new
   end
 
   def self.config
@@ -35,28 +36,26 @@ module Kemal
 
   # Overload of self.run with the default startup logging
   def self.run(port = nil)
-    self.run port do
+    run port do
       log "[#{config.env}] Kemal is ready to lead at #{config.scheme}://#{config.host_binding}:#{config.port}"
     end
   end
 
   # Overload of self.run to allow just a block
   def self.run(&block)
-    self.run nil, &block
+    run nil, &block
   end
 
   # The command to run a `Kemal` application.
   # The port can be given to `#run` but is optional.
   # If not given Kemal will use `Kemal::Config#port`
-  def self.run(port = nil)
+  def self.run(port = nil, &block)
     Kemal::CLI.new(Kemal.config)
 
-    Kemal.application.run(port) do |application|
-      yield application
-    end
+    application.run(port, &block)
   end
 
   def self.stop
-    Kemal.application.stop
+    application.stop
   end
 end

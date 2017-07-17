@@ -30,7 +30,7 @@ class Kemal::Base
   property! server : HTTP::Server
   property running = false
 
-  def initialize(@config = Config.new)
+  def initialize(@config = Config.base)
     add_filter_handler(filter_handler)
   end
 
@@ -189,42 +189,33 @@ class Kemal::Base
   def run(port = nil, &block)
     setup
 
+    prepare_for_server_start
+
+    start_server &block
+  end
+
+  private def prepare_for_server_start
+    unless @config.env == "test"
+      Signal::INT.trap do
+        log "Kemal is going to take a rest!" if @config.shutdown_message
+        stop
+        exit
+      end
+    end
+  end
+
+  private def start_server(&block)
     @server = server = HTTP::Server.new(@config.host_binding, @config.port, @handlers)
     {% if !flag?(:without_openssl) %}
     server.tls = config.ssl
     {% end %}
 
-    unless error_handlers.has_key?(404)
-      error 404 do |env|
-        render_404
-      end
-    end
-
-    # Test environment doesn't need to have signal trap, built-in images, and logging.
-    unless config.env == "test"
-      Signal::INT.trap do
-        log "Kemal is going to take a rest!" if config.shutdown_message
-        Kemal.stop
-        exit
-      end
-
-      # This route serves the built-in images for not_found and exceptions.
-      get "/__kemal__/:image" do |env|
-        image = env.params.url["image"]
-        file_path = File.expand_path("lib/kemal/images/#{image}", Dir.current)
-        if File.exists? file_path
-          send_file env, file_path
-        else
-          halt env, 404
-        end
-      end
-    end
-
+    server.bind
     @running = true
 
     yield self
 
-    server.listen if @config.env != "test"
+    server.listen unless @config.env == "test"
   end
 
   def stop
