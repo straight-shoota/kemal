@@ -1,6 +1,6 @@
 class Kemal::Application < Kemal::Base
-  def initialize(@config = Config.default)
-    add_filter_handler(filter_handler)
+  def initialize(config = Config.default)
+    super(config)
   end
 
   private def prepare_for_server_start
