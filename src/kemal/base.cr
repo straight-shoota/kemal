@@ -94,7 +94,7 @@ class Kemal::Base
     server.tls = config.ssl
     {% end %}
 
-    server.bind
+    server.bind unless @config.env == "test"
     @running = true
 
     yield self

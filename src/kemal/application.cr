@@ -1,5 +1,5 @@
 class Kemal::Application < Kemal::Base
-  def initialize(config = Config.default)
+  def initialize(config = Config.new)
     super(config)
   end
 
