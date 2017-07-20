@@ -42,7 +42,7 @@ describe "Macros" do
       client_response.body.should eq("world")
 
       app.get "/breaking" do |env|
-        halt env, 404, "hello"
+        Kemal::Macros.halt env, 404, "hello"
         "world"
       end
       request = HTTP::Request.new("GET", "/breaking")
@@ -54,7 +54,7 @@ describe "Macros" do
     it "can break block with halt macro using default values" do
       app = Kemal::Base.new
       app.get "/" do |env|
-        halt env
+        Kemal::Macros.halt env
         "world"
       end
       request = HTTP::Request.new("GET", "/")
@@ -69,7 +69,7 @@ describe "Macros" do
       app = Kemal::Base.new
       app.get "/headers" do |env|
         env.response.headers.add "Content-Type", "image/png"
-        headers env, {
+        app.headers env, {
           "Access-Control-Allow-Origin" => "*",
           "Content-Type"                => "text/plain",
         }
@@ -85,7 +85,7 @@ describe "Macros" do
     it "sends file with given path and default mime-type" do
       app = Kemal::Base.new
       app.get "/" do |env|
-        send_file env, "./spec/asset/hello.ecr"
+        app.send_file env, "./spec/asset/hello.ecr"
       end
 
       request = HTTP::Request.new("GET", "/")
@@ -98,7 +98,7 @@ describe "Macros" do
     it "sends file with given path and given mime-type" do
       app = Kemal::Base.new
       app.get "/" do |env|
-        send_file env, "./spec/asset/hello.ecr", "image/jpeg"
+        app.send_file env, "./spec/asset/hello.ecr", "image/jpeg"
       end
 
       request = HTTP::Request.new("GET", "/")
@@ -111,7 +111,7 @@ describe "Macros" do
     it "sends file with binary stream" do
       app = Kemal::Base.new
       app.get "/" do |env|
-        send_file env, "Serdar".to_slice
+        app.send_file env, "Serdar".to_slice
       end
 
       request = HTTP::Request.new("GET", "/")
@@ -119,31 +119,6 @@ describe "Macros" do
       response.status_code.should eq(200)
       response.headers["Content-Type"].should eq("application/octet-stream")
       response.headers["Content-Length"].should eq("6")
-    end
-  end
-
-  describe "#gzip" do
-    it "adds HTTP::CompressHandler to handlers" do
-      gzip true
-      Kemal.application.setup
-      Kemal.application.handlers[4].should be_a(HTTP::CompressHandler)
-    end
-  end
-
-  describe "#serve_static" do
-    it "should disable static file hosting" do
-      serve_static false
-      Kemal.config.serve_static.should eq false
-    end
-
-    it "should disble enable gzip and dir_listing" do
-      serve_static({"gzip" => true, "dir_listing" => true})
-      conf = Kemal.config.serve_static
-      conf.is_a?(Hash).should eq true
-      if conf.is_a?(Hash)
-        conf["gzip"].should eq true
-        conf["dir_listing"].should eq true
-      end
     end
   end
 end
