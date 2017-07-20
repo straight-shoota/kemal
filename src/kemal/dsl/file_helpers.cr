@@ -81,7 +81,7 @@ end
 #     headers(env, {"custom-header" => "This is a custom value"})
 #   end
 def headers(env, additional_headers)
-  env.response.headers.merge!(additional_headers)
+  Kemal.application.headers(env, additional_headers)
 end
 
 # Send a file with given path and base the mime-type on the file extension

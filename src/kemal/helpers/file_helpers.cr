@@ -93,6 +93,10 @@ module Kemal::FileHelpers
     end
   end
 
+  def headers(env, additional_headers)
+    env.response.headers.merge!(additional_headers)
+  end
+
   # Send a file with given data and default `application/octet-stream` mime_type.
   #
   #   send_file env, data_slice
