@@ -50,7 +50,7 @@ class Kemal::Base
 
     prepare_for_server_start
 
-    start_server &block
+    start_server port, &block
   end
 
   def self.run(port = nil, &block)
@@ -84,8 +84,8 @@ class Kemal::Base
     end
   end
 
-  private def start_server(&block)
-    @server = server = HTTP::Server.new(@config.host_binding, @config.port, @handlers)
+  private def start_server(port, &block)
+    @server = server = HTTP::Server.new(@config.host_binding, port || @config.port, @handlers)
     {% if !flag?(:without_openssl) %}
     server.tls = config.ssl
     {% end %}

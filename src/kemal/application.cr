@@ -3,6 +3,13 @@ class Kemal::Application < Kemal::Base
     super(config)
   end
 
+  # Overload of self.run with the default startup logging
+  def run(port = nil)
+    run port do
+      log "[#{config.env}] Kemal is ready to lead at #{config.scheme}://#{config.host_binding}:#{port || config.port}"
+    end
+  end
+
   private def prepare_for_server_start
     super
 
