@@ -7,7 +7,7 @@ class HTTP::Server
     # :nodoc:
     STORE_MAPPINGS = [Nil, String, Int32, Int64, Float64, Bool]
 
-    property! application : Kemal::Base
+    property! app : Kemal::Base
 
     macro finished
       alias StoreTypes = Union({{ *STORE_MAPPINGS }})
@@ -29,7 +29,7 @@ class HTTP::Server
     end
 
     def route_lookup
-      application.route_handler.lookup_route(@request.override_method.as(String), @request.path)
+      app.route_handler.lookup_route(@request.override_method.as(String), @request.path)
     end
 
     def route_defined?

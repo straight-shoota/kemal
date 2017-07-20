@@ -26,7 +26,7 @@ describe "Kemal::CommonExceptionHandler" do
     app.get "/" do |env|
       env.response.status_code = 403
     end
-    context.application = app
+    context.app = app
     subject = Kemal::CommonExceptionHandler.new(app)
     subject.next = Kemal::RouteHandler.new
     subject.call(context)
@@ -50,7 +50,7 @@ describe "Kemal::CommonExceptionHandler" do
     app.get "/" do |env|
       env.response.status_code = 500
     end
-    context.application = app
+    context.app = app
     subject = Kemal::CommonExceptionHandler.new(app)
     subject.next = Kemal::RouteHandler.new
     subject.call(context)
@@ -75,7 +75,7 @@ describe "Kemal::CommonExceptionHandler" do
       env.response.content_type = "application/json"
       env.response.status_code = 500
     end
-    context.application = app
+    context.app = app
     subject = Kemal::CommonExceptionHandler.new(app)
     subject.next = Kemal::RouteHandler.new
     subject.call(context)
@@ -100,7 +100,7 @@ describe "Kemal::CommonExceptionHandler" do
       env.response.content_type = "application/json"
       env.response.status_code = 500
     end
-    context.application = app
+    context.app = app
     subject = Kemal::CommonExceptionHandler.new(Kemal::Base.new)
     subject.next = Kemal::RouteHandler.new
     subject.call(context)

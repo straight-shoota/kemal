@@ -13,7 +13,7 @@ module Kemal
       return call_next(context) unless context.route_defined?
       call_block_for_path_type("ALL", context.request.path, :before, context)
       call_block_for_path_type(context.request.override_method, context.request.path, :before, context)
-      if context.application.error_handlers.has_key?(context.response.status_code)
+      if context.app.error_handlers.has_key?(context.response.status_code)
         raise Kemal::Exceptions::CustomException.new(context)
       end
       call_next(context)

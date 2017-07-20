@@ -33,7 +33,7 @@ def create_request_and_return_io(handler, request)
   io = IO::Memory.new
   response = HTTP::Server::Response.new(io)
   context = HTTP::Server::Context.new(request, response)
-  context.application = Kemal.application
+  context.app = Kemal.application
   handler.call(context)
   response.close
   io.rewind
@@ -44,7 +44,7 @@ def create_ws_request_and_return_io(handler, request)
   io = IO::Memory.new
   response = HTTP::Server::Response.new(io)
   context = HTTP::Server::Context.new(request, response)
-  context.application = Kemal.application
+  context.app = Kemal.application
   begin
     handler.call context
   rescue IO::Error

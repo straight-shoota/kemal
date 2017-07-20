@@ -35,7 +35,7 @@ module Kemal
       content = route.handler.call(context)
     ensure
       remove_tmpfiles(context)
-      if context.application.error_handlers.has_key?(context.response.status_code)
+      if context.app.error_handlers.has_key?(context.response.status_code)
         raise Kemal::Exceptions::CustomException.new(context)
       end
       context.response.print(content)

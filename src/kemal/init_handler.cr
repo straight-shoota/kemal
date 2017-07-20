@@ -4,15 +4,15 @@ module Kemal
   class InitHandler
     include HTTP::Handler
 
-    getter application : Kemal::Base
+    getter app : Kemal::Base
 
-    def initialize(@application)
+    def initialize(@app)
     end
 
     def call(context)
       context.response.headers.add "X-Powered-By", "Kemal"
       context.response.content_type = "text/html" unless context.response.headers.has_key?("Content-Type")
-      context.application = application
+      context.app = app
       call_next context
     end
   end
