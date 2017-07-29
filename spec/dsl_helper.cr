@@ -12,22 +12,22 @@ class CustomLogHandler < Kemal::BaseLogHandler
   end
 end
 
-def create_request_and_return_io(handler, request)
+def create_request_and_return_io(handler, request, app = Kemal.application)
   io = IO::Memory.new
   response = HTTP::Server::Response.new(io)
   context = HTTP::Server::Context.new(request, response)
-  context.app = Kemal.application
+  context.initialize_url_params(app)
   handler.call(context)
   response.close
   io.rewind
   io
 end
 
-def create_ws_request_and_return_io(handler, request)
+def create_ws_request_and_return_io(handler, request, app = Kemal.application)
   io = IO::Memory.new
   response = HTTP::Server::Response.new(io)
   context = HTTP::Server::Context.new(request, response)
-  context.app = Kemal.application
+  context.initialize_url_params(app)
   begin
     handler.call context
   rescue IO::Error

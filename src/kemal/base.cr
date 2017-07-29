@@ -15,9 +15,9 @@ class Kemal::Base
   include Base::Builder
 
   # :nodoc:
-  getter route_handler = Kemal::RouteHandler.new
+  getter! route_handler
   # :nodoc:
-  getter filter_handler = Kemal::FilterHandler.new
+  getter! filter_handler
 
   getter handlers = [] of HTTP::Handler
   getter websocket_handlers = [] of HTTP::WebSocketHandler
@@ -30,6 +30,8 @@ class Kemal::Base
   property? running = false
 
   def initialize(@config = Config.base)
+    @filter_handler = Kemal::FilterHandler.new(self)
+    @route_handler = Kemal::RouteHandler.new(self)
     initialize_defaults
   end
 

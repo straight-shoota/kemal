@@ -49,7 +49,8 @@ end
 
 describe "Handler" do
   it "adds custom handler before before_*" do
-    filter_middleware = Kemal::FilterHandler.new
+    app = Kemal::Base.new
+    filter_middleware = Kemal::FilterHandler.new(app)
     filter_middleware._add_route_filter("GET", "/", :before) do |env|
       env.response << " is"
     end
@@ -57,7 +58,6 @@ describe "Handler" do
     filter_middleware._add_route_filter("GET", "/", :before) do |env|
       env.response << " so"
     end
-    app = Kemal::Base.new
     app.add_filter_handler filter_middleware
 
     app.add_handler CustomTestHandler.new
