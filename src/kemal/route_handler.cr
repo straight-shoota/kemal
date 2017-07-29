@@ -42,6 +42,7 @@ module Kemal
     private def process_request(context)
       raise Kemal::Exceptions::RouteNotFound.new(context) unless route_defined?(context.request)
       route = lookup_route(context.request).payload.as(Route)
+      context.route_handler = self
       content = route.handler.call(context)
     ensure
       remove_tmpfiles(context)

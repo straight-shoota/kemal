@@ -7,21 +7,20 @@ class HTTP::Server
     # :nodoc:
     STORE_MAPPINGS = [Nil, String, Int32, Int64, Float64, Bool]
 
+    property! route_handler : Kemal::RouteHandler
+
     macro finished
       alias StoreTypes = Union({{ *STORE_MAPPINGS }})
       getter store = {} of String => StoreTypes
     end
 
     def params
+      @request.url_params ||= route_handler.lookup_route(@request).params
       @params ||= if @request.param_parser
                     @request.param_parser.not_nil!
                   else
                     Kemal::ParamParser.new(@request)
                   end
-    end
-
-    def initialize_url_params(app)
-      @request.url_params ||= app.route_handler.lookup_route(@request).params
     end
 
     def redirect(url, status_code = 302)
