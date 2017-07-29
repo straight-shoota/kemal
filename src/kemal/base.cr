@@ -15,27 +15,32 @@ class Kemal::Base
   include Base::Builder
 
   # :nodoc:
-  getter route_handler = Kemal::RouteHandler.new
+  # TODO: These ivars are initialized in the constructor, but their values depend on `self`.
+  getter! route_handler : RouteHandler?
   # :nodoc:
-  getter filter_handler = Kemal::FilterHandler.new
+  getter! filter_handler : FilterHandler?
   # :nodoc:
-  getter websocket_handler = Kemal::WebSocketHandler.new
+  getter! websocket_handler : WebSocketHandler?
 
   getter handlers = [] of HTTP::Handler
   getter error_handlers = {} of Int32 => HTTP::Server::Context, Exception -> String
 
   getter config : Config
 
-  property! logger : Kemal::BaseLogHandler
+  property! logger : BaseLogHandler
   property! server : HTTP::Server
   property? running = false
 
   def initialize(@config = Config.base)
     @logger = if @config.logging?
-                Kemal::LogHandler.new
+                LogHandler.new
               else
-                Kemal::NullLogHandler.new
+                NullLogHandler.new
               end
+    @filter_handler = FilterHandler.new(self)
+    @route_handler = RouteHandler.new(self)
+    @websocket_handler = WebSocketHandler.new(self)
+
     initialize_defaults
   end
 
